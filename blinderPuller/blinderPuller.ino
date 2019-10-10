@@ -11,7 +11,11 @@ int m1_speed = 255;
 int m2_speed = 255;
 
 const int o_sensor1 = 2; //alternating between 0 and 1
-int old_time1;
+const int OLD_COUNT = 1;
+
+//saves old time values, latest value at last position
+int old_times1[OLD_COUNT];
+int deriv1 = 0;
 int time1;
 
 //Buttons, active low
@@ -53,6 +57,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(o_sensor1), timer1, CHANGE);
 
   curr_state = unknown;
+  reset_old_times();
 }
 
 void loop() {
@@ -60,26 +65,28 @@ void loop() {
     {
       curr_state = going_down;
       time1 = millis();
-      old_time1 = time1;
+      reset_old_times();
     }
   else if (!digitalRead(btn_up)) 
   {
       curr_state = going_up;
       time1 = millis();
-      old_time1 = time1;
+      reset_old_times();
   }
-
 
   if (curr_state == going_up)
   {
-      Serial.println("Going down");
+      Serial.println("Going up");
     
       digitalWrite(in3, HIGH);
       digitalWrite(in4, LOW);
       delay(50);
       
-      while ( time1 - old_time1 < 50 && millis() - time1 < 50)
-      {}
+      //while ( time1 - old_time1 < 20)
+
+      while (deriv1 < 15)
+      {
+      }
 
       digitalWrite(in3, LOW);
 
@@ -95,8 +102,9 @@ void loop() {
       digitalWrite(in4, HIGH);
       delay(50);
       
-      while ( time1 - old_time1 > 10 && millis() - time1 < 50)
-      {}
+      while ( deriv1 < 15 )
+      {
+        }
 
       digitalWrite(in4, LOW);
 
@@ -106,8 +114,23 @@ void loop() {
   }
 }
 
+void reset_old_times()
+{
+  for (int i = 0; i < OLD_COUNT; i++)
+  {
+      old_times1[i] = 10;  
+  }
+  time1 = 10;
+}
+
 void timer1()
 {
-  old_time1 = time1;
+  for (int i = 0; i < OLD_COUNT - 1; i++)
+  {
+    old_times1[i] = old_times1[i+1];
+  }
+  old_times1[OLD_COUNT - 1] = time1;
   time1 = millis();
+  deriv1 = time1 - old_times1[0]; 
+  Serial.println(deriv1);
 }
