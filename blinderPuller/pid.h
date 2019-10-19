@@ -1,45 +1,75 @@
 #ifndef _PID
 #define _PID
 
-template<typename T>
+typedef long TimeType; //TimeType
+
+template<typename Type>
 class PID
 {
 public:
     PID() = default;
-    PID(T& input, T& output, T set_point, T kp, T ip, T dp) :
-	input{input}, output{output}, set_point{set_point}, prev_time{0},
-	prev_error{0}, integral{0}, kp{kp}, ip{ip}, dp{dp}
+    PID(Type& set_point, double kp, double ip, double dp,
+	Type min_output, Type max_output) :
+	set_point{set_point}, prev_time{0},
+	prev_error{0}, total_error{0}, kp{kp}, ip{ip}, dp{dp},
+	min_output{min_output}, max_output{max_output}
 	{}
 
-    void update()
+    Type update(Type input, long time)
 	{
-	    T curr_time = millis();
-	    T elapsed_time = curr_time - prev_time;
+	    TimeType curr_time = millis();
+	    TimeType elapsed_time = curr_time - prev_time;
 
-	    T error = set_point - elapsed_time;
+	    Type error = set_point - input;
 
-	    integral += error * input;
-	    T deriv = (error - prev_error)/elapsed_time;
+	    total_error += (error * elapsed_time) ;
 
-	    output = kp*error + ip*integral + dp*deriv;
+	    Serial.print(" ");
+	    Serial.print(set_point);
+	    Serial.print(" - ");
+	    Serial.print(input);
+	    Serial.print(" = ");	    
+	    //Serial.print(" error: ");
+	    Serial.print(error);
+	    
+	    Serial.print(" total error: ");
+	    Serial.print(total_error);
+	    
+	    Type delta_error = (error - prev_error) / elapsed_time;
 
+	    Type output = kp*error + ip * total_error  + dp * delta_error;
+
+	    Serial.print(" output: ");
+	    Serial.print(output);
+
+	    if (output > max_output)
+	    {
+		output = max_output;
+	    }
+	    else if (output < min_output)
+	    {
+		output = min_output;
+	    }
+	    
 	    prev_error = error;
 	    prev_time = curr_time;
+
+	    return output;
 	}
     
 private:
-
-    T& input;
-    T& output;
     
-    T set_point;
-    T prev_time;
-    T prev_error;
-    T integral;
+    Type& set_point;
+    TimeType prev_time;
+    Type prev_error;
+    Type total_error;
 
-    T kp;
-    T ip;
-    T dp;    
+    const Type min_output;
+    const Type max_output;
+
+    double kp;
+    double ip;
+    double dp;    
 };
 
 #endif

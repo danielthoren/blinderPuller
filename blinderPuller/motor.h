@@ -26,15 +26,17 @@ public:
     void timer();
 
     unsigned long get_pwm();
+    void set_speed(float speed);
     
 private:
     void init();
     
     float speed;                 //speed in %
-    unsigned long pwm;           //pwm number
+    long pwm;           //pwm number
     Motor_state state;
-    unsigned long prev_pulse;    //Time of latest pulse from o_sensor
-    unsigned long pulse_width;   //Time betwen latest pulses
+    long target_speed;  //set point for pid
+    long prev_pulse;    //Time of latest pulse from o_sensor
+    long pulse_width;   //Time betwen latest pulses
     int curr_pulse_pos;
     const int in1;
     const int in2;
@@ -43,10 +45,11 @@ private:
     //Number of pulses until blinder at bottom, positive downwards
     const unsigned long pulses_to_bottom;
 
-    PID<unsigned long> pid;
+    PID<long> pid;
 
-    static const int MAX_SPEED = 20;      //Max speed in ms
-    static const int DEFAULT_PWM = 100;   //Default value for pwm
+    static const int DEFAULT_PWM = 255 * 0.5;   //Default value for pwm
+    static const int MAX_SPEED = 10000;      //Max speed in ms
+    static const int MIN_SPEED = 20000;
 };
 
 
