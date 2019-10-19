@@ -47,7 +47,7 @@ private:
 
     PID<long> pid;
 
-    static const int DEFAULT_PWM = 255 * 0.5;   //Default value for pwm
+    static const int DEFAULT_PWM = 250;   //Default value for pwm
     static const int MAX_SPEED = 10000;      //Max speed in ms
     static const int MIN_SPEED = 20000;
 };

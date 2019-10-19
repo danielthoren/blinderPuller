@@ -5,11 +5,11 @@
 
 Motor::Motor(float speed, unsigned long pulses_to_bottom, int in1, int in2, int enable) :
     speed{speed}, pwm{0}, state{Motor_state::unknown},
-    target_speed{1000},
-    prev_pulse{millis()},
+    target_speed{200},
+    prev_pulse{0},
     pulse_width{0}, curr_pulse_pos{0}, in1{in1}, in2{in2}, enable{enable},
     pulses_to_bottom{pulses_to_bottom},
-    pid{target_speed, -0.01, 0, 0, 50, 255}
+    pid{target_speed, -0.001, -0.0001, 0, 50, 255}
 {
     init();
 }
@@ -27,9 +27,7 @@ void Motor::init()
 }
 
 void Motor::update()
-{
-    const int pid_time = 10;
-    
+{    
     if (state == going_up)
     {
     	if (!true)//pwm == 255)
@@ -41,12 +39,6 @@ void Motor::update()
     	    curr_pulse_pos = 0;
     	    analogWrite(enable, 0);
     	}
-	else
-	{
-	    delay(10);	    
-	    pwm = pid.update(pulse_width, pid_time);
-    	    analogWrite(enable, pwm);
-	}
     }
     else if (state == going_down)
     {
@@ -112,7 +104,7 @@ void Motor::timer()
     unsigned long time = micros();
     if (prev_pulse == 0)
     {
-	prev_pulse = time - MAX_SPEED;
+	prev_pulse = time;
     }
     long pw_tmp = time - prev_pulse;
     prev_pulse = time;
@@ -123,5 +115,7 @@ void Motor::timer()
     if (pw_tmp > 0)
     {	
 	pulse_width = pw_tmp;
+	pwm = pid.update(pw_tmp);
+	analogWrite(enable, pwm);
     }
 }

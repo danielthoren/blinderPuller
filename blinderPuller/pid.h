@@ -15,32 +15,35 @@ public:
 	min_output{min_output}, max_output{max_output}
 	{}
 
-    Type update(Type input, long time)
+    Type update(Type input)
 	{
 	    TimeType curr_time = millis();
 	    TimeType elapsed_time = curr_time - prev_time;
 
 	    Type error = set_point - input;
 
-	    total_error += (error * elapsed_time) ;
+	    total_error += (error) ;
 
 	    Serial.print(" ");
 	    Serial.print(set_point);
 	    Serial.print(" - ");
 	    Serial.print(input);
-	    Serial.print(" = ");	    
-	    //Serial.print(" error: ");
+	    Serial.print(" = ");
 	    Serial.print(error);
-	    
-	    Serial.print(" total error: ");
-	    Serial.print(total_error);
+
+	    Serial.print(" kp part = ");
+	    Serial.print(kp*error*elapsed_time);
+
+	    Serial.print(" ip part = ");
+	    Serial.print(ip*total_error);
+	   
 	    
 	    Type delta_error = (error - prev_error) / elapsed_time;
 
-	    Type output = kp*error + ip * total_error  + dp * delta_error;
+	    Type output = (kp*error + ip*total_error  + dp*delta_error);
 
 	    Serial.print(" output: ");
-	    Serial.print(output);
+	    Serial.println(output);
 
 	    if (output > max_output)
 	    {
