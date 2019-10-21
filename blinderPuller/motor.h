@@ -38,6 +38,7 @@ private:
     long prev_pulse;    //Time of latest pulse from o_sensor
     long pulse_width;   //Time betwen latest pulses
     int curr_pulse_pos;
+    int max_pwm_counter;    //counts how many updates pwm = 255
     const int in1;
     const int in2;
     const int enable;

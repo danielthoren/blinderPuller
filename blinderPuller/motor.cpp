@@ -5,11 +5,11 @@
 
 Motor::Motor(float speed, unsigned long pulses_to_bottom, int in1, int in2, int enable) :
     speed{speed}, pwm{0}, state{Motor_state::unknown},
-    target_speed{200},
+    target_speed{9000},
     prev_pulse{0},
     pulse_width{0}, curr_pulse_pos{0}, in1{in1}, in2{in2}, enable{enable},
     pulses_to_bottom{pulses_to_bottom},
-    pid{target_speed, -0.001, -0.0001, 0, 50, 255}
+    pid{target_speed, -0.0005, -0.0001, 0.00001, 0, 255}
 {
     init();
 }
@@ -30,26 +30,39 @@ void Motor::update()
 {    
     if (state == going_up)
     {
-    	if (!true)//pwm == 255)
+	delay(10);
+	pulse_width = micros() - prev_pulse;
+	pwm = pid.update(pulse_width);
+	
+    	if (pwm == 255)
 	{
-    	    Serial.println("max pwm going up");
-    	    digitalWrite(in1, LOW);
-    	    state = up;
-    	    Serial.println("is up");
-    	    curr_pulse_pos = 0;
-    	    analogWrite(enable, 0);
-    	}
-    }
-    else if (state == going_down)
-    {
-	if (pulses_to_bottom <= curr_pulse_pos)
+	    max_pwm_counter++;
+	    
+	    if (max_pwm_counter > 3)
+	    {
+		Serial.println("max pwm going up");
+		digitalWrite(in1, LOW);
+		state = up;
+		Serial.println("is up");
+		curr_pulse_pos = 0;
+		analogWrite(enable, 0);
+	    }
+	}
+	else
 	{
-	    digitalWrite(in2, LOW);
-	    state = down;
-	    Serial.println("is down");
-	    analogWrite(enable, 0);
+	    max_pwm_counter = 0;
 	}
     }
+	else if (state == going_down)
+	{
+	    if (pulses_to_bottom <= curr_pulse_pos)
+	    {
+		digitalWrite(in2, LOW);
+		state = down;
+		Serial.println("is down");
+		analogWrite(enable, 0);
+	    }
+	}
 }
 
 void Motor::go_up()
@@ -62,7 +75,7 @@ void Motor::go_up()
 	digitalWrite(in2, LOW);
 	pwm = DEFAULT_PWM;
 	analogWrite(enable, pwm);
-	delay(100);
+	pid.reset();
     }    
 }
 
@@ -77,6 +90,7 @@ void Motor::go_down()
 	digitalWrite(in2, HIGH);
 	pwm = DEFAULT_PWM;
 	analogWrite(enable, pwm);
+	pid.reset();
     }
 }
 
@@ -109,13 +123,12 @@ void Motor::timer()
     long pw_tmp = time - prev_pulse;
     prev_pulse = time;
 
-    Serial.print("pulse_width = ");
-    Serial.println(pw_tmp);
+    // Serial.print("pulse_width = ");
+    // Serial.println(pw_tmp);
 
     if (pw_tmp > 0)
     {	
 	pulse_width = pw_tmp;
-	pwm = pid.update(pw_tmp);
 	analogWrite(enable, pwm);
     }
 }

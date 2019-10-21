@@ -18,32 +18,41 @@ public:
     Type update(Type input)
 	{
 	    TimeType curr_time = millis();
-	    TimeType elapsed_time = curr_time - prev_time;
+	    //TimeType elapsed_time = curr_time - prev_time;
+	    TimeType elapsed_time = 1;
 
 	    Type error = set_point - input;
 
-	    total_error += (error) ;
-
-	    Serial.print(" ");
-	    Serial.print(set_point);
-	    Serial.print(" - ");
-	    Serial.print(input);
-	    Serial.print(" = ");
-	    Serial.print(error);
-
-	    Serial.print(" kp part = ");
-	    Serial.print(kp*error*elapsed_time);
-
-	    Serial.print(" ip part = ");
-	    Serial.print(ip*total_error);
-	   
+	    total_error += (error / elapsed_time);
 	    
 	    Type delta_error = (error - prev_error) / elapsed_time;
 
 	    Type output = (kp*error + ip*total_error  + dp*delta_error);
 
 	    Serial.print(" output: ");
-	    Serial.println(output);
+	    Serial.print(output);
+	   
+	    Serial.print(" kp part = ");
+	    Serial.print(kp*error*elapsed_time);
+
+	    Serial.print(" ip part = ");
+	    Serial.print(ip*total_error);
+
+	    Serial.print(" error: ");
+	    Serial.print(error);
+
+	    Serial.print(" total_error: ");
+	    Serial.println(total_error);
+
+	    Serial.print(" delta: ");
+	    Serial.print(delta_error);
+
+	    // Serial.print("       ");
+	    // Serial.print(set_point);
+	    // Serial.print(" - ");
+	    // Serial.print(input);
+	    // Serial.print(" = ");
+	    // Serial.print(error);
 
 	    if (output > max_output)
 	    {
@@ -58,6 +67,13 @@ public:
 	    prev_time = curr_time;
 
 	    return output;
+	}
+
+    void reset()
+	{
+	    total_error = 0;
+	    prev_time = millis();
+	    prev_error = 0;
 	}
     
 private:
