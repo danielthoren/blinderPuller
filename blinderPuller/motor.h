@@ -11,7 +11,9 @@ public:
 	going_up,
 	down,
 	going_down,
-	unknown
+	go_up_down, //When state us unknown but want to go down
+	middle,     //When not up or down but position known
+	unknown     //State is unknown
     };
     
     Motor(float speed, unsigned long pulses_to_bottom, int in1, int in2, int enable);
@@ -21,6 +23,7 @@ public:
 
     void go_up();
     void go_down();
+    void abort();
 
     //Updates time variables, called by interrupt
     void timer();
@@ -30,13 +33,15 @@ public:
     
 private:
     void init();
+    void update_up();
+    void update_down();
     
-    float speed;                 //speed in %
-    long pwm;           //pwm number
+    float speed;            //speed in %
+    long pwm;               //pwm number
     Motor_state state;
-    long target_speed;  //set point for pid
-    long prev_pulse;    //Time of latest pulse from o_sensor
-    long pulse_width;   //Time betwen latest pulses
+    long target_speed;      //set point for pid
+    long prev_pulse;        //Time of latest pulse from o_sensor
+    long pulse_width;       //Time betwen latest pulses
     int curr_pulse_pos;
     int max_pwm_counter;    //counts how many updates pwm = 255
     const int in1;

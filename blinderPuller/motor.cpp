@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "limits.h"
 #include "math.h"
 
 #include "motor.h"
@@ -7,7 +8,7 @@ Motor::Motor(float speed, unsigned long pulses_to_bottom, int in1, int in2, int 
     speed{speed}, pwm{0}, state{Motor_state::unknown},
     target_speed{9000},
     prev_pulse{0},
-    pulse_width{0}, curr_pulse_pos{0}, in1{in1}, in2{in2}, enable{enable},
+    pulse_width{0}, curr_pulse_pos{INT_MIN}, in1{in1}, in2{in2}, enable{enable},
     pulses_to_bottom{pulses_to_bottom},
     pid{target_speed, -0.0005, -0.0001, 0.00001, 0, 255}
 {
@@ -28,41 +29,72 @@ void Motor::init()
 
 void Motor::update()
 {    
-    if (state == going_up)
+    if (state == going_up || state == go_up_down)
     {
-	delay(10);
-	pulse_width = micros() - prev_pulse;
-	pwm = pid.update(pulse_width);
+	update_up();
+    }
+    else if (state == going_down)
+    {
+	update_down();
+    }
+}
+
+void Motor::update_down()
+{
+    if (pulses_to_bottom <= curr_pulse_pos)
+    {
+	digitalWrite(in2, LOW);
+	state = down;
+	Serial.println("is down");
+	analogWrite(enable, 0);
+    }
+}
+
+void Motor::update_up()
+{
+    delay(10);
+    pulse_width = micros() - prev_pulse;
+    pwm = pid.update(pulse_width);
 	
-    	if (pwm == 255)
+    if (pwm == 255)
+    {
+	max_pwm_counter++;
+    }
+    else
+    {
+	max_pwm_counter = 0;
+    }
+		    
+    if (max_pwm_counter > 3)
+    {
+	digitalWrite(in1, LOW);
+	Serial.println("is up");
+	curr_pulse_pos = 0;
+	analogWrite(enable, 0);
+
+	if (state == go_up_down)
 	{
-	    max_pwm_counter++;
-	    
-	    if (max_pwm_counter > 3)
-	    {
-		Serial.println("max pwm going up");
-		digitalWrite(in1, LOW);
-		state = up;
-		Serial.println("is up");
-		curr_pulse_pos = 0;
-		analogWrite(enable, 0);
-	    }
+	    state = going_down;
 	}
 	else
 	{
-	    max_pwm_counter = 0;
+	    state = up;
 	}
     }
-	else if (state == going_down)
-	{
-	    if (pulses_to_bottom <= curr_pulse_pos)
-	    {
-		digitalWrite(in2, LOW);
-		state = down;
-		Serial.println("is down");
-		analogWrite(enable, 0);
-	    }
-	}
+}
+
+void Motor::abort()
+{
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, LOW);
+    if (curr_pulse_pos == INT_MIN)
+    {
+	state = unknown;
+    }
+    else
+    {
+	state = middle;
+    }
 }
 
 void Motor::go_up()
@@ -81,11 +113,19 @@ void Motor::go_up()
 
 void Motor::go_down()
 {
-    state = up; //temporary, should be removed later
-    if (state != down && state != unknown && state != going_down)
+    if (state != down && state != going_down)
     {
-	Serial.println("Set state down");
-	state = going_down;
+	if (state != unknown && curr_pulse_pos != INT_MIN)
+	{
+	    Serial.println("Set state down");
+	    state = going_down;
+	}
+	else
+	{
+	    Serial.println("Set state go_up_down");
+	    state = go_up_down;
+	}
+	
 	digitalWrite(in1, LOW);
 	digitalWrite(in2, HIGH);
 	pwm = DEFAULT_PWM;
@@ -106,13 +146,16 @@ void Motor::set_speed(float speed)
 
 void Motor::timer()
 {
-    if (state == going_up)
+    if (curr_pulse_pos != INT_MIN)
     {
-    	curr_pulse_pos--;
-    }
-    else
-    {
-    	curr_pulse_pos++;
+	if (state == going_up)
+	{
+	    curr_pulse_pos--;
+	}
+	else
+	{
+	    curr_pulse_pos++;
+	}
     }
 
     unsigned long time = micros();
