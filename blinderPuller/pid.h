@@ -33,7 +33,7 @@ public:
 	    Serial.print(output);
 	   
 	    Serial.print(" kp part = ");
-	    Serial.print(kp*error*elapsed_time);
+	    Serial.print(kp*error);
 
 	    Serial.print(" ip part = ");
 	    Serial.print(ip*total_error);
@@ -47,12 +47,12 @@ public:
 	    Serial.print(" delta: ");
 	    Serial.print(delta_error);
 
-	    // Serial.print("       ");
-	    // Serial.print(set_point);
-	    // Serial.print(" - ");
-	    // Serial.print(input);
-	    // Serial.print(" = ");
-	    // Serial.print(error);
+	    Serial.print("       ");
+	    Serial.print(set_point);
+	    Serial.print(" - ");
+	    Serial.print(input);
+	    Serial.print(" = ");
+	    Serial.print(error);
 
 	    if (output > max_output)
 	    {
@@ -76,7 +76,7 @@ public:
 	    prev_error = 0;
 	}
     
-private:
+//private:
     
     Type& set_point;
     TimeType prev_time;
