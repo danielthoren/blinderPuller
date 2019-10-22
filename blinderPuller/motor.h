@@ -40,21 +40,24 @@ private:
     long pwm;               //pwm number
     Motor_state state;
     long target_speed;      //set point for pid
+    
     long prev_pulse;        //Time of latest pulse from o_sensor
     long pulse_width;       //Time betwen latest pulses
-    int curr_pulse_pos;
+    int curr_pulse_pos;     //Current pulse position
+    //Number of pulses until blinder at bottom, positive downwards
+    const unsigned long pulses_to_bottom;
+    
     int max_pwm_counter;    //counts how many updates pwm = 255
+    
     const int in1;
     const int in2;
     const int enable;
 
-    //Number of pulses until blinder at bottom, positive downwards
-    const unsigned long pulses_to_bottom;
-
     PID<long> pid;
 
-    static const int DEFAULT_PWM = 250;   //Default value for pwm
-    static const int MAX_SPEED = 10000;      //Max speed in ms
+    static const int UP_PWM = 0;//250;       //Default value for pwm when going up
+    static const int DOWN_PWM = 0;//70;      //Default value for pwm when going down
+    static const int MAX_SPEED = 10000;  //Max speed in ms
     static const int MIN_SPEED = 20000;
 };
 
