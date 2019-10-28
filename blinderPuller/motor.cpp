@@ -7,7 +7,11 @@
 Motor::Motor(float speed, unsigned long pulses_to_bottom, int in1, int in2, int enable) :
     speed{speed}, pwm{0}, state{Motor_state::unknown},
     target_speed{9000},
+<<<<<<< HEAD
     prev_pulse{0},
+=======
+    prev_pulse{0}, pulse_width{0},
+>>>>>>> d15e1ceb4af7c23e5d07c249c9f3f9acfafe4b6e
     curr_pulse_pos{INT_MIN}, pulses_to_bottom{pulses_to_bottom},
     max_pwm_counter{0},
     in1{in1}, in2{in2}, enable{enable},
@@ -64,9 +68,15 @@ void Motor::update()
 void Motor::update_down()
 {
     delay(10);
+<<<<<<< HEAD
     unsigned long pulse_width = millis() - prev_pulse;
     
     pwm = pid.update( (pulse_width + get_average_pulse()) / 2 );
+=======
+    pulse_width = micros() - prev_pulse;
+    
+    pwm = pid.update(pulse_width);
+>>>>>>> d15e1ceb4af7c23e5d07c249c9f3f9acfafe4b6e
     analogWrite(enable, pwm);    
    
     if (pulses_to_bottom <= curr_pulse_pos)
@@ -74,18 +84,28 @@ void Motor::update_down()
 	digitalWrite(in2, LOW);
 	state = down;
 	Serial.println("Set state: down");
+<<<<<<< HEAD
 	    analogWrite(enable, 0);
+=======
+	analogWrite(enable, 0);
+>>>>>>> d15e1ceb4af7c23e5d07c249c9f3f9acfafe4b6e
     }
 }
 
 void Motor::update_up()
 {
     delay(10);
+<<<<<<< HEAD
 
     unsigned long pulse_width = millis() - prev_pulse;
     
     pwm = pid.update( (pulse_width + get_average_pulse()) / 2 );
       
+=======
+    pulse_width = micros() - prev_pulse;
+    
+    pwm = pid.update(pulse_width);
+>>>>>>> d15e1ceb4af7c23e5d07c249c9f3f9acfafe4b6e
     analogWrite(enable, pwm);    
     if (pwm == 255)
     {
@@ -142,7 +162,11 @@ void Motor::go_up()
 	digitalWrite(in2, LOW);
 	pwm = UP_PWM;
 	analogWrite(enable, pwm);
+<<<<<<< HEAD
 	reset_old_pulses();
+=======
+	pulse_width = target_speed;
+>>>>>>> d15e1ceb4af7c23e5d07c249c9f3f9acfafe4b6e
 	pid.reset();
     }    
 }
@@ -166,7 +190,11 @@ void Motor::go_down()
 	digitalWrite(in2, HIGH);
 	pwm = DOWN_PWM;
 	analogWrite(enable, pwm);
+<<<<<<< HEAD
 	reset_old_pulses();
+=======
+	pulse_width = target_speed;
+>>>>>>> d15e1ceb4af7c23e5d07c249c9f3f9acfafe4b6e
 	pid.reset();
     }
 }
@@ -194,8 +222,13 @@ void Motor::timer()
 	    curr_pulse_pos++;
 	}
     }
+<<<<<<< HEAD
     
     unsigned long time = millis();
+=======
+    //Serial.println(curr_pulse_pos);
+    unsigned long time = micros();
+>>>>>>> d15e1ceb4af7c23e5d07c249c9f3f9acfafe4b6e
     if (prev_pulse == 0)
     {
 	prev_pulse = time;
@@ -204,11 +237,16 @@ void Motor::timer()
     prev_pulse = time;
 
     if (pw_tmp > 0)
+<<<<<<< HEAD
     {
 	for (int i = OLD_PULSE_SIZE - 1; i > 0; i++)
 	{
 	    old_pulses[i] = old_pulses[i-1];
 	}
 	old_pulses[0] = pw_tmp;
+=======
+    {	
+	pulse_width = pw_tmp;
+>>>>>>> d15e1ceb4af7c23e5d07c249c9f3f9acfafe4b6e
     }
 }
