@@ -55,8 +55,8 @@ private:
 
     PID<long> pid;
 
-    static const int UP_PWM = 0;//250;       //Default value for pwm when going up
-    static const int DOWN_PWM = 0;//70;      //Default value for pwm when going down
+    static const int UP_PWM = 250;       //Default value for pwm when going up
+    static const int DOWN_PWM = 70;      //Default value for pwm when going down
     static const int MAX_SPEED = 10000;  //Max speed in ms
     static const int MIN_SPEED = 20000;
 };

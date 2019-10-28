@@ -35,8 +35,8 @@ public:
 	    Serial.print(" kp part = ");
 	    Serial.print(kp*error);
 
-	    Serial.print(" ip part = ");
-	    Serial.print(ip*total_error);
+	    Serial.print(" dp part = ");
+	    Serial.print(dp*delta_error);
 
 	    Serial.print(" error: ");
 	    Serial.print(error);

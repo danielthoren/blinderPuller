@@ -11,7 +11,7 @@ Motor::Motor(float speed, unsigned long pulses_to_bottom, int in1, int in2, int 
     curr_pulse_pos{INT_MIN}, pulses_to_bottom{pulses_to_bottom},
     max_pwm_counter{0},
     in1{in1}, in2{in2}, enable{enable},
-    pid{target_speed, -0.0005, -0.0001, -0.00001, 0, 255}
+    pid{target_speed, -0.001, 0, 0.1, 50, 255}
 {
     init();
 }
@@ -43,7 +43,7 @@ void Motor::update()
 void Motor::update_down()
 {
     delay(10);
-    pulse_width = micros() - prev_pulse;
+    //pulse_width = micros() - prev_pulse;
     
     pwm = pid.update(pulse_width);
     analogWrite(enable, pwm);    
@@ -60,7 +60,7 @@ void Motor::update_down()
 void Motor::update_up()
 {
     delay(10);
-    pulse_width = micros() - prev_pulse;
+    //pulse_width = micros() - prev_pulse;
     
     pwm = pid.update(pulse_width);
     analogWrite(enable, pwm);    
