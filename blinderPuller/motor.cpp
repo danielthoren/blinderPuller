@@ -6,12 +6,13 @@
 
 Motor::Motor(float speed, unsigned long pulses_to_bottom, int in1, int in2, int enable) :
     speed{speed}, pwm{0}, state{Motor_state::unknown},
-    target_speed{9000},
+    target_speed{10},
     prev_pulse{0},
     curr_pulse_pos{INT_MIN}, pulses_to_bottom{pulses_to_bottom},
     max_pwm_counter{0},
     in1{in1}, in2{in2}, enable{enable},
-    pid{target_speed, -0.001, 0, 0.1, 50, 255}
+    pid_up{target_speed, -5, 0, -0.5, 50, 255},
+    pid_down{target_speed, -2, 0, 0, -1, 255}
 {
     init();
 }
@@ -35,7 +36,9 @@ void Motor::reset_old_pulses()
     for (int i{0}; i < OLD_PULSE_SIZE; i++)
     {
 	old_pulses[i] = target_speed;
-    }    
+	Serial.print(old_pulses[i]);
+    }
+    Serial.println("]");
 }
 
 unsigned long Motor::get_average_pulse()
@@ -57,6 +60,7 @@ void Motor::update()
     }
     else if (state == going_down)
     {
+	Serial.println("go down");
 	update_down();
     }
 }
@@ -66,9 +70,8 @@ void Motor::update_down()
     delay(10);
     unsigned long pulse_width = millis() - prev_pulse;
     
-    pwm = pid.update( (pulse_width + get_average_pulse()) / 2 );
-    
-    pwm = pid.update(pulse_width);
+    pwm = pid_down.update( (pulse_width + get_average_pulse()) / 2 );
+   
     analogWrite(enable, pwm);
    
     if (pulses_to_bottom <= curr_pulse_pos)
@@ -84,8 +87,8 @@ void Motor::update_up()
 {
     delay(10);
     unsigned long pulse_width = millis() - prev_pulse;
-    
-    pwm = pid.update( (pulse_width + get_average_pulse()) / 2 );
+
+    pwm = pid_up.update( (pulse_width + get_average_pulse()) / 2 );
     
     analogWrite(enable, pwm);    
     if (pwm == 255)
@@ -144,7 +147,7 @@ void Motor::go_up()
 	pwm = UP_PWM;
 	analogWrite(enable, pwm);
 	reset_old_pulses();
-	pid.reset();
+	pid_up.reset();
     }    
 }
 
@@ -156,19 +159,24 @@ void Motor::go_down()
 	{
 	    Serial.println("Set state: going_down");
 	    state = going_down;
+
+	    digitalWrite(in1, LOW);
+	    digitalWrite(in2, HIGH);
+	    pwm = DOWN_PWM;
+	    analogWrite(enable, pwm);
+	    reset_old_pulses();
+	    pid_down.reset();
 	}
 	else
 	{
 	    Serial.println("Set state: go_up_down");
-	    state = go_up_down;
-	}
-	
-	digitalWrite(in1, LOW);
-	digitalWrite(in2, HIGH);
-	pwm = DOWN_PWM;
-	analogWrite(enable, pwm);
-	reset_old_pulses();
-	pid.reset();
+	    //state = go_up_down;
+	    //go_up();
+
+	    state = up;
+	    curr_pulse_pos = 0;
+	    go_down();                                                      //obs, remove when done with pid!!!
+	}	
     }
 }
 
@@ -201,12 +209,13 @@ void Motor::timer()
     {
 	prev_pulse = time;
     }
-    long pw_tmp = time - prev_pulse;
+    unsigned long pw_tmp = time - prev_pulse;
+    Serial.println(pw_tmp);
     prev_pulse = time;
 
     if (pw_tmp > 0)
     {
-	for (int i = OLD_PULSE_SIZE - 1; i > 0; i++)
+	for (int i = OLD_PULSE_SIZE - 1; i >= 0; i--)
 	{
 	    old_pulses[i] = old_pulses[i-1];
 	}

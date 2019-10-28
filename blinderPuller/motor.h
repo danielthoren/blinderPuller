@@ -62,7 +62,8 @@ private:
     const int in2;
     const int enable;
 
-    PID<long> pid;
+    PID<long> pid_up;
+    PID<long> pid_down;
 };
 
 

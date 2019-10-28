@@ -18,17 +18,21 @@ public:
     Type update(Type input)
 	{
 	    TimeType curr_time = millis();
-	    //TimeType elapsed_time = curr_time - prev_time;
-	    TimeType elapsed_time = 1;
+	    TimeType elapsed_time = curr_time - prev_time;
+	    //TimeType elapsed_time = 1;
 
 	    Type error = set_point - input;
 
-	    total_error += (error / elapsed_time);
+	    total_error += (error * elapsed_time);
 	    
 	    Type delta_error = (error - prev_error) / elapsed_time;
+	    prev_error = error;
 
 	    Type output = (kp*error + ip*total_error  + dp*delta_error);
 
+	    Serial.print("kp = ");
+	    Serial.print(kp);
+	    
 	    Serial.print(" output: ");
 	    Serial.print(output);
 	   
@@ -63,7 +67,6 @@ public:
 		output = min_output;
 	    }
 	    
-	    prev_error = error;
 	    prev_time = curr_time;
 
 	    return output;
@@ -83,12 +86,12 @@ public:
     Type prev_error;
     Type total_error;
 
-    const Type min_output;
-    const Type max_output;
-
     double kp;
     double ip;
-    double dp;    
+    double dp;
+
+    const Type min_output;
+    const Type max_output;
 };
 
 #endif
