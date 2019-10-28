@@ -7,7 +7,7 @@
 Motor::Motor(float speed, unsigned long pulses_to_bottom, int in1, int in2, int enable) :
     speed{speed}, pwm{0}, state{Motor_state::unknown},
     target_speed{9000},
-    prev_pulse{0}, pulse_width{0},
+    prev_pulse{0},
     curr_pulse_pos{INT_MIN}, pulses_to_bottom{pulses_to_bottom},
     max_pwm_counter{0},
     in1{in1}, in2{in2}, enable{enable},
@@ -26,6 +26,27 @@ void Motor::init()
     digitalWrite(in2, LOW);
 
     analogWrite(enable, pwm);
+
+    reset_old_pulses();
+}
+
+void Motor::reset_old_pulses()
+{
+    for (int i{0}; i < OLD_PULSE_SIZE; i++)
+    {
+	old_pulses[i] = target_speed;
+    }    
+}
+
+unsigned long Motor::get_average_pulse()
+{
+    unsigned long average{0};
+    
+    for (int i{0}; i < OLD_PULSE_SIZE; i++)
+    {
+	average += old_pulses[i];
+    }
+    return average/OLD_PULSE_SIZE;
 }
 
 void Motor::update()
@@ -43,10 +64,12 @@ void Motor::update()
 void Motor::update_down()
 {
     delay(10);
-    //pulse_width = micros() - prev_pulse;
+    unsigned long pulse_width = millis() - prev_pulse;
+    
+    pwm = pid.update( (pulse_width + get_average_pulse()) / 2 );
     
     pwm = pid.update(pulse_width);
-    analogWrite(enable, pwm);    
+    analogWrite(enable, pwm);
    
     if (pulses_to_bottom <= curr_pulse_pos)
     {
@@ -60,9 +83,10 @@ void Motor::update_down()
 void Motor::update_up()
 {
     delay(10);
-    //pulse_width = micros() - prev_pulse;
+    unsigned long pulse_width = millis() - prev_pulse;
     
-    pwm = pid.update(pulse_width);
+    pwm = pid.update( (pulse_width + get_average_pulse()) / 2 );
+    
     analogWrite(enable, pwm);    
     if (pwm == 255)
     {
@@ -119,7 +143,7 @@ void Motor::go_up()
 	digitalWrite(in2, LOW);
 	pwm = UP_PWM;
 	analogWrite(enable, pwm);
-	pulse_width = target_speed;
+	reset_old_pulses();
 	pid.reset();
     }    
 }
@@ -143,7 +167,7 @@ void Motor::go_down()
 	digitalWrite(in2, HIGH);
 	pwm = DOWN_PWM;
 	analogWrite(enable, pwm);
-	pulse_width = target_speed;
+	reset_old_pulses();
 	pid.reset();
     }
 }
@@ -171,8 +195,8 @@ void Motor::timer()
 	    curr_pulse_pos++;
 	}
     }
-    //Serial.println(curr_pulse_pos);
-    unsigned long time = micros();
+    
+    unsigned long time = millis();
     if (prev_pulse == 0)
     {
 	prev_pulse = time;
@@ -180,11 +204,12 @@ void Motor::timer()
     long pw_tmp = time - prev_pulse;
     prev_pulse = time;
 
-    // Serial.print("pulse_width = ");
-    // Serial.println(pw_tmp);
-
     if (pw_tmp > 0)
-    {	
-	pulse_width = pw_tmp;
+    {
+	for (int i = OLD_PULSE_SIZE - 1; i > 0; i++)
+	{
+	    old_pulses[i] = old_pulses[i-1];
+	}
+	old_pulses[0] = pw_tmp;
     }
 }
